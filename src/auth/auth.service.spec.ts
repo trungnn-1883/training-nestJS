@@ -12,5 +12,4 @@ describe('AuthService', () => {
 
     service = module.get<AuthService>(AuthService);
   });
-
 });

@@ -1,66 +1,81 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { RegisterDto } from 'src/dto/register.dto';
+import { RegisterDto } from 'src/users/dto/register.dto';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 import { I18nService } from 'nestjs-i18n/dist/services/i18n.service';
-import { I18nContext } from 'nestjs-i18n';
+import { UserResponseDto } from 'src/users/dto/user-response.dto';
+import { plainToInstance } from 'class-transformer';
+import { LoginDto } from 'src/users/dto/login.dto';
 
 @Injectable()
 export class AuthService {
+  constructor(
+    private readonly usersService: UsersService,
+    private jwtService: JwtService,
+    private readonly i18n: I18nService,
+  ) {}
 
-    constructor(private readonly usersService: UsersService, private jwtService: JwtService, private readonly i18n: I18nService) { }
+  async login(loginDto: LoginDto): Promise<any> {
+    const { email = '', password = '' } = loginDto;
+    const user = await this.usersService.findOne(email);
 
-    async signIn(email: string, password: string): Promise<any> {
-        const user = await this.usersService.findOne(email)
-      
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-            throw new UnauthorizedException();
-        }
-
-        const payload = { sub: user.userId, email: user.email }
-
-        return {
-            email: user.email,
-            bio: user.bio,
-            image: user.image,
-            access_token: await this.jwtService.signAsync(payload),
-        };
+    if (!user || !(await bcrypt.compare(password, user.password ?? ''))) {
+      throw new UnauthorizedException(this.i18n.t('auth.INVALID_CREDENTIALS'));
     }
 
-    async register(registerDto: RegisterDto) {
-         const currentLanguage = I18nContext.current()?.lang ?? 'en';
-            
-        const { username, email, password } = registerDto;
+    const payload = { sub: user.userId, email: user.email };
 
-        const user = await this.usersService.findOne(email);
-        if (user) {
-            throw new BadRequestException(this.i18n.t('auth.EMAIL_ALREADY_REGISTERED', { lang: currentLanguage }));
-        }
+    return plainToInstance(UserResponseDto, {
+      email: user.email,
+      username: user.username,
+      bio: user.bio,
+      image: user.image,
+      token: await this.jwtService.signAsync(payload),
+    });
+  }
 
-        const salt = await bcrypt.genSalt();
-        const hashedPassword = await bcrypt.hash(password, salt);
+  async register(registerDto: RegisterDto) {
+    const { username, email, password } = registerDto;
 
-        const newUser = await this.usersService.createUser(email, username, hashedPassword);
-         const payload = { sub: newUser.userId, email: newUser.email }
-         
-        return { 
-            email: newUser.email,
-            username: newUser.username,
-            bio: newUser.bio,
-            image: newUser.image,
-            access_token: await this.jwtService.signAsync(payload) };
+    const user = await this.usersService.findOne(email);
+    if (user) {
+      throw new BadRequestException(
+        this.i18n.t('auth.EMAIL_ALREADY_REGISTERED'),
+      );
     }
 
-    async validateUser(email: string, password: string): Promise<any> {
-        const user = await this.usersService.findOne(email);
-   
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-            throw new UnauthorizedException();
-        }
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-        const { password: _password, ...result } = user;
-        return result;
+    const createdUser = await this.usersService.createUser(
+      email,
+      username,
+      hashedPassword,
+    );
+    const payload = { sub: createdUser.userId, email: createdUser.email };
+
+    return plainToInstance(UserResponseDto, {
+      email: createdUser.email,
+      username: createdUser.username,
+      bio: createdUser.bio,
+      image: createdUser.image,
+      token: await this.jwtService.signAsync(payload),
+    });
+  }
+
+  async validateUser(email: string, password: string): Promise<any> {
+    const user = await this.usersService.findOne(email);
+
+    if (!user || !(await bcrypt.compare(password, user.password ?? ''))) {
+      throw new UnauthorizedException(this.i18n.t('auth.INVALID_CREDENTIALS'));
     }
 
+    const { password: _password, ...result } = user;
+    return result;
+  }
 }

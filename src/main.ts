@@ -25,9 +25,11 @@ async function bootstrap() {
   app.useGlobalPipes(new I18nValidationPipe());
 
   // Use the i18n exception filter to format the error responses nicely
-  app.useGlobalFilters(new I18nValidationExceptionFilter({
-    detailedErrors: false
-  }));
+  app.useGlobalFilters(
+    new I18nValidationExceptionFilter({
+      detailedErrors: false,
+    }),
+  );
 
   await app.listen(port);
 }

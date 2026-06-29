@@ -1,44 +1,30 @@
 import { Injectable } from '@nestjs/common';
-
-export type User = any;
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm/browser/repository/Repository.js';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
+  constructor(
+    @InjectRepository(User) private readonly userRepository: Repository<User>,
+  ) {}
 
-  private users = [
-    {
-      userId: 1,
-      email: 'trung@example.com',
-      password: 'Aa@1234567',
-      bio: "I work as a software engineer and I love to code",
-      image: null
-    },
-    {
-      userId: 2,
-      email: 'alpha@example.com',
-      password: 'Aa@123456',
-      bio: "I work as a teacher and I love to teach",
-      image: null
-    },
-  ]
-
-  async findOne(email: string): Promise<User | undefined> {
-    return this.users.find(user => user.email === email);
+  async findOne(email: string): Promise<User | null> {
+    return this.userRepository.findOneBy({ email });
   }
 
-  createUser(email: string, username: string, hashedPassword: string): User {
-    const maxId = this.users.reduce((max, user) => (user.userId > max ? user.userId : max), 0);
-    const user = {
-      userId: maxId + 1,
-      email: email,
-      username: username,
-      password: hashedPassword,
-      bio: "I work as a software engineer and I love to code",
-      image: null
-    }
-    this.users.push(user);
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
-  }
+  async createUser(
+    email: string,
+    username: string,
+    hashedPassword: string,
+  ): Promise<User> {
+    const user = new User();
+    user.email = email;
+    user.username = username;
+    user.password = hashedPassword;
+    user.bio = 'I work as a software engineer and I love to code';
+    user.image = null;
 
+    return await this.userRepository.save(user);
+  }
 }

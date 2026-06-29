@@ -3,12 +3,9 @@ import { I18nContext, I18nService } from 'nestjs-i18n';
 
 @Injectable()
 export class AppService {
-
-  constructor(private readonly i18n: I18nService) { }
+  constructor(private readonly i18n: I18nService) {}
 
   getHello(): string {
-    const currentLanguage = I18nContext.current()?.lang ?? 'en';
-
-    return this.i18n.t('test.HELLO', { lang: currentLanguage });
+    return this.i18n.t('test.HELLO');
   }
 }
