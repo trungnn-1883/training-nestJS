@@ -11,7 +11,7 @@ export class UserResponseDto {
     description: 'Authentication token',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   })
-  token: string | undefined;
+  access_token: string | undefined;
 
   @ApiProperty({ description: 'Username of the user', example: 'john_doe' })
   username: string | undefined;

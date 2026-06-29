@@ -35,7 +35,7 @@ export class AuthService {
       username: user.username,
       bio: user.bio,
       image: user.image,
-      token: await this.jwtService.signAsync(payload),
+      access_token: await this.jwtService.signAsync(payload),
     });
   }
 
@@ -64,7 +64,7 @@ export class AuthService {
       username: createdUser.username,
       bio: createdUser.bio,
       image: createdUser.image,
-      token: await this.jwtService.signAsync(payload),
+      access_token: await this.jwtService.signAsync(payload),
     });
   }
 
