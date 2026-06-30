@@ -27,7 +27,7 @@ import { User } from './users/entities/user.entity';
       password: process.env.DATABASE_PASSWORD ?? 'root',
       database: process.env.DATABASE_NAME ?? 'training_nestjs',
       entities: [User],
-      synchronize: true,
+      synchronize: false,
     }),
     I18nModule.forRoot({
       fallbackLanguage: 'en',
